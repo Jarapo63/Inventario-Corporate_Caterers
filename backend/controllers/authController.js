@@ -40,7 +40,7 @@ const login = async (req, res) => {
     });
   } catch (error) {
     console.error('Error en Login AuthController:', error.message);
-    res.status(500).json({ message: 'Error interno conectando a Google Sheets' });
+    res.status(500).json({ message: `Error conectando a Sheets: ${error.message}` });
   }
 };
 
