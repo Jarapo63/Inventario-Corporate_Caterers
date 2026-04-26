@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, Check, X, PlusCircle, Loader2 } from 'lucide-react';
 import { fetchCatalog, updateProduct, addProduct, fetchProviders } from '../utils/api';
+import { toast } from 'react-hot-toast';
 
 const ProductManager = () => {
   const navigate = useNavigate();
@@ -85,7 +86,7 @@ const ProductManager = () => {
         setActiveTab(Object.keys(data)[0]);
       }
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -142,7 +143,7 @@ const ProductManager = () => {
       await loadCatalog();
       setEditingIdx(null);
     } catch (err) {
-      alert(`Error al guardar: ${err.message}`);
+      toast.error(`Error al guardar: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -168,7 +169,7 @@ const ProductManager = () => {
       setIsAdding(false);
       setAddForm({ id: '', prov: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '' });
     } catch (err) {
-      alert(`Error creando producto: ${err.message}`);
+      toast.error(`Error creando producto: ${err.message}`);
     } finally {
       setIsSaving(false);
     }

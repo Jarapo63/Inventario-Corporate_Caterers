@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, Check, X, PlusCircle, Loader2, Power, PowerOff } from 'lucide-react';
 import { fetchProviders, addProvider, updateProvider } from '../utils/api';
+import { toast } from 'react-hot-toast';
+import { confirmAction } from '../utils/toastHelpers';
 
 const ProviderManager = () => {
   const navigate = useNavigate();
@@ -25,7 +27,7 @@ const ProviderManager = () => {
       const { data } = await fetchProviders();
       setProviders(data || []);
     } catch (err) {
-      alert(`Error cargando proveedores: ${err.message}`);
+      toast.error(`Error cargando proveedores: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -33,7 +35,7 @@ const ProviderManager = () => {
 
   const handleAddNew = async () => {
     if (!addForm.idProv || !addForm.nombre) {
-      alert("ID y Nombre son obligatorios");
+      toast.error("ID y Nombre son obligatorios");
       return;
     }
     setIsSaving(true);
@@ -43,7 +45,7 @@ const ProviderManager = () => {
       setIsAdding(false);
       setAddForm({ idProv: '', nombre: '', estado: 'Activo' });
     } catch (err) {
-      alert(`Error creando proveedor: ${err.message}`);
+      toast.error(`Error creando proveedor: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -56,25 +58,26 @@ const ProviderManager = () => {
       await loadProviders();
       setEditingRow(null);
     } catch (err) {
-      alert(`Error actualizando: ${err.message}`);
+      toast.error(`Error actualizando: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleToggleStatus = async (prov) => {
+  const handleToggleStatus = (prov) => {
     const newStatus = prov.estado === 'Activo' ? 'Inactivo' : 'Activo';
-    if (!window.confirm(`¿Estás seguro de marcar el proveedor como ${newStatus}?`)) return;
-    
-    setIsSaving(true);
-    try {
-      await updateProvider(prov.rowNum, { idProv: prov.idProv, nombre: prov.nombre, estado: newStatus });
-      await loadProviders();
-    } catch (err) {
-      alert(`Error cambiando estado: ${err.message}`);
-    } finally {
-      setIsSaving(false);
-    }
+    confirmAction(`¿Estás seguro de marcar el proveedor como ${newStatus}?`, async () => {
+      setIsSaving(true);
+      try {
+        await updateProvider(prov.rowNum, { idProv: prov.idProv, nombre: prov.nombre, estado: newStatus });
+        toast.success(`Proveedor marcado como ${newStatus}`);
+        await loadProviders();
+      } catch (err) {
+        toast.error(`Error cambiando estado: ${err.message}`);
+      } finally {
+        setIsSaving(false);
+      }
+    });
   };
 
   if (loading && providers.length === 0) {

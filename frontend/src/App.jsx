@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { toast } from 'react-hot-toast';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import InventoryCapture from './pages/InventoryCapture';
@@ -11,6 +12,21 @@ import ProviderManager from './pages/ProviderManager';
 import CancelledReports from './pages/CancelledReports';
 import UserManager from './pages/UserManager';
 import './index.css';
+
+const ProtectedRoute = ({ isAuthenticated, allowedRoles, children }) => {
+  const role = localStorage.getItem('userRole');
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" />;
+  }
+
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    toast.error('Acceso denegado: No tienes permisos para ver esta sección.');
+    return <Navigate to="/dashboard" />;
+  }
+
+  return children;
+};
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -24,15 +40,61 @@ function App() {
     <Router>
       <Routes>
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login setAuth={setIsAuthenticated} />} />
-        <Route path="/dashboard" element={isAuthenticated ? <Dashboard setAuth={setIsAuthenticated} /> : <Navigate to="/" />} />
-        <Route path="/capture" element={isAuthenticated ? <InventoryCapture /> : <Navigate to="/" />} />
-        <Route path="/manage" element={isAuthenticated ? <ProductManager /> : <Navigate to="/" />} />
-        <Route path="/reception" element={isAuthenticated ? <Reception /> : <Navigate to="/" />} />
-        <Route path="/analytics" element={isAuthenticated ? <Analytics /> : <Navigate to="/" />} />
-        <Route path="/reports/orders" element={isAuthenticated ? <ReportsOrders /> : <Navigate to="/" />} />
-        <Route path="/reports/cancelled" element={isAuthenticated ? <CancelledReports /> : <Navigate to="/" />} />
-        <Route path="/providers" element={isAuthenticated ? <ProviderManager /> : <Navigate to="/" />} />
-        <Route path="/users" element={isAuthenticated ? <UserManager /> : <Navigate to="/" />} />
+        
+        <Route path="/dashboard" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager', 'Asistente', 'Subcheff']}>
+            <Dashboard setAuth={setIsAuthenticated} />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/capture" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager']}>
+            <InventoryCapture />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/manage" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Asistente']}>
+            <ProductManager />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/reception" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager', 'Asistente', 'Subcheff']}>
+            <Reception />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/analytics" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin']}>
+            <Analytics />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/reports/orders" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin']}>
+            <ReportsOrders />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/reports/cancelled" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin']}>
+            <CancelledReports />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/providers" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Asistente']}>
+            <ProviderManager />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/users" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin']}>
+            <UserManager />
+          </ProtectedRoute>
+        } />
+        
       </Routes>
     </Router>
   );

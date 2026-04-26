@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
 import { fetchCatalog, getAuthHeaders, submitInventory } from '../utils/api';
+import { toast } from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
@@ -30,7 +31,7 @@ const InventoryCapture = () => {
       const { data } = await fetchCatalog();
       setCatalog(data);
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -72,7 +73,7 @@ const InventoryCapture = () => {
     try {
       const result = await submitInventory(inventoryData, captureType, captureSessionId);
       
-      alert(result.message); 
+      toast.success(result.message); 
       
       setCaptureSessionId(`PED-${Math.floor(Date.now() / 1000)}`);
       setCaptureDate(new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }));
@@ -81,7 +82,7 @@ const InventoryCapture = () => {
       
       navigate('/dashboard');
     } catch (err) {
-      alert('Error guardando: ' + err.message);
+      toast.error('Error guardando: ' + err.message);
     } finally {
       setSaving(false);
     }

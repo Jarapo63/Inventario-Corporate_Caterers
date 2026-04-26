@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogOut, LayoutDashboard, Package, ClipboardList, TrendingUp, Users } from 'lucide-react';
 import { fetchCatalog, fetchReceptionAlerts, resolveReceptionAlert, cancelReceptionAlert } from '../utils/api';
+import { toast } from 'react-hot-toast';
+import { confirmAction } from '../utils/toastHelpers';
 
 const Dashboard = ({ setAuth }) => {
   const navigate = useNavigate();
@@ -50,36 +52,36 @@ const Dashboard = ({ setAuth }) => {
   const handleResolveAlert = async (orderId, productId) => {
     const qty = parseFloat(resolutionQty[`${orderId}-${productId}`]);
     if (!qty || qty <= 0) {
-      alert("Por favor ingresa una cantidad válida mayor a 0.");
+      toast.error("Por favor ingresa una cantidad válida mayor a 0.");
       return;
     }
     
     setResolvingIds(prev => ({ ...prev, [`${orderId}-${productId}`]: true }));
     try {
       await resolveReceptionAlert(orderId, productId, qty);
-      alert('Se resolvió la discrepancia y el ingreso físico se registró en Movimientos de Inventario.');
+      toast.success('Se resolvió la discrepancia y el ingreso físico se registró en Movimientos de Inventario.');
       setResolutionQty(prev => ({ ...prev, [`${orderId}-${productId}`]: '' }));
       loadAlerts(); // Recargar alertas (puede que desaparezca)
     } catch (err) {
-      alert(`Error al resolver: ${err.message}`);
+      toast.error(`Error al resolver: ${err.message}`);
     } finally {
       setResolvingIds(prev => ({ ...prev, [`${orderId}-${productId}`]: false }));
     }
   };
 
-  const handleCancelAlert = async (orderId, productId) => {
-    if (!window.confirm('¿Confirmas que deseas cancelar esta mercancía definitivamente? Se moverá al reporte de faltantes.')) return;
-    
-    setResolvingIds(prev => ({ ...prev, [`${orderId}-${productId}`]: true }));
-    try {
-      await cancelReceptionAlert(orderId, productId);
-      alert('La mercancía se ha marcado como Cancelada/Faltante.');
-      loadAlerts();
-    } catch (err) {
-      alert(`Error al cancelar: ${err.message}`);
-    } finally {
-      setResolvingIds(prev => ({ ...prev, [`${orderId}-${productId}`]: false }));
-    }
+  const handleCancelAlert = (orderId, productId) => {
+    confirmAction('¿Confirmas que deseas cancelar esta mercancía definitivamente? Se moverá al reporte de faltantes.', async () => {
+      setResolvingIds(prev => ({ ...prev, [`${orderId}-${productId}`]: true }));
+      try {
+        await cancelReceptionAlert(orderId, productId);
+        toast.success('La mercancía se ha marcado como Cancelada/Faltante.');
+        loadAlerts();
+      } catch (err) {
+        toast.error(`Error al cancelar: ${err.message}`);
+      } finally {
+        setResolvingIds(prev => ({ ...prev, [`${orderId}-${productId}`]: false }));
+      }
+    });
   };
 
   return (
@@ -120,8 +122,8 @@ const Dashboard = ({ setAuth }) => {
             </div>
           )}
 
-          {/* Módulo Recepción (Admin / Manager / Subcheff) */}
-          {(userRole === 'Admin' || userRole === 'Manager' || userRole === 'Subcheff') && (
+          {/* Módulo Recepción (Admin / Manager / Subcheff / Asistente) */}
+          {(userRole === 'Admin' || userRole === 'Manager' || userRole === 'Subcheff' || userRole === 'Asistente') && (
             <div 
               className="glass-panel" 
               style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'transform 0.2s' }}
@@ -276,7 +278,7 @@ const Dashboard = ({ setAuth }) => {
             )}
           </div>
           
-          {(userRole === 'Admin' || userRole === 'Manager' || userRole === 'Subcheff') && alerts.length > 0 && (
+          {(userRole === 'Admin' || userRole === 'Manager' || userRole === 'Subcheff' || userRole === 'Asistente') && alerts.length > 0 && (
             <div className="glass-panel" style={{ flex: 1, minWidth: '300px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
               <div style={{ padding: '1rem', borderBottom: '1px solid rgba(239, 68, 68, 0.2)' }}>
                 <h4 style={{ margin: 0, color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

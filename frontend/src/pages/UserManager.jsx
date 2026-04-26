@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, ArrowLeft, Plus, Edit2, Trash2, Save, X, Eye, EyeOff } from 'lucide-react';
 import { fetchUsers, addUserAdmin, updateUserAdmin, deleteUserAdmin } from '../utils/api';
+import { toast } from 'react-hot-toast';
+import { confirmAction } from '../utils/toastHelpers';
 
 const UserManager = () => {
   const navigate = useNavigate();
@@ -29,7 +31,7 @@ const UserManager = () => {
       setUsers(validUsers);
     } catch (error) {
       console.error("Error al cargar usuarios:", error);
-      alert("Error al cargar usuarios. Asegúrate de ser Administrador.");
+      toast.error("Error al cargar usuarios. Asegúrate de ser Administrador.");
     } finally {
       setLoading(false);
     }
@@ -37,7 +39,7 @@ const UserManager = () => {
 
   const handleAddNew = async () => {
     if (!addForm.username || !addForm.password || !addForm.role) {
-      alert("Por favor llena todos los campos del nuevo usuario.");
+      toast.error("Por favor llena todos los campos del nuevo usuario.");
       return;
     }
     
@@ -50,7 +52,7 @@ const UserManager = () => {
       setShowAddForm(false);
     } catch (error) {
       console.error("Error agregando usuario:", error);
-      alert(`Error al agregar usuario: ${error.message}`);
+      toast.error(`Error al agregar usuario: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -68,7 +70,7 @@ const UserManager = () => {
 
   const handleSaveEdit = async () => {
     if (!editForm.username || !editForm.password || !editForm.role) {
-      alert("Los campos no pueden estar vacíos.");
+      toast.error("Los campos no pueden estar vacíos.");
       return;
     }
 
@@ -84,27 +86,26 @@ const UserManager = () => {
       setEditingRow(null);
     } catch (error) {
       console.error("Error editando usuario:", error);
-      alert(`Error al editar usuario: ${error.message}`);
+      toast.error(`Error al editar usuario: ${error.message}`);
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (rowNum, username) => {
-    if (!window.confirm(`¿Estás seguro que deseas eliminar al usuario '${username}' permanentemente del sistema?`)) {
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      await deleteUserAdmin(rowNum);
-      setUsers(prev => prev.filter(u => u.rowNum !== rowNum));
-    } catch (error) {
-      console.error("Error eliminando usuario:", error);
-      alert(`Error al eliminar usuario: ${error.message}`);
-    } finally {
-      setIsSaving(false);
-    }
+  const handleDelete = (rowNum, username) => {
+    confirmAction(`¿Estás seguro que deseas eliminar al usuario '${username}' permanentemente del sistema?`, async () => {
+      setIsSaving(true);
+      try {
+        await deleteUserAdmin(rowNum);
+        setUsers(prev => prev.filter(u => u.rowNum !== rowNum));
+        toast.success(`Usuario ${username} eliminado`);
+      } catch (error) {
+        console.error("Error eliminando usuario:", error);
+        toast.error(`Error al eliminar usuario: ${error.message}`);
+      } finally {
+        setIsSaving(false);
+      }
+    });
   };
 
   const togglePasswordVisibility = (rowNum) => {

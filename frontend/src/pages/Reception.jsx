@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Loader2, PackageCheck } from 'lucide-react';
 import { fetchPendingOrders, fetchOrderDetails, submitReception } from '../utils/api';
+import { toast } from 'react-hot-toast';
 
 const Reception = () => {
   const navigate = useNavigate();
@@ -33,7 +34,7 @@ const Reception = () => {
         setSelectedOrderId(data[0].id); // Selecciona la más reciente
       }
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -46,7 +47,7 @@ const Reception = () => {
       const { data } = await fetchOrderDetails(orderId);
       setOrderDetails(data || []);
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -74,18 +75,18 @@ const Reception = () => {
     }).filter(i => i.recibido !== undefined && i.recibido !== '');
 
     if (receptionData.length === 0) {
-      alert('No has introducido ninguna cantidad para recepcionar.');
+      toast.error('No has introducido ninguna cantidad para recepcionar.');
       setSaving(false);
       return;
     }
 
     try {
       const result = await submitReception(receptionData);
-      alert(result.message); 
+      toast.success(result.message); 
       setReceivedQty({});
       navigate('/dashboard');
     } catch (err) {
-      alert('Error guardando: ' + err.message);
+      toast.error('Error guardando: ' + err.message);
     } finally {
       setSaving(false);
     }
