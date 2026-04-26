@@ -14,15 +14,18 @@ import UserManager from './pages/UserManager';
 import './index.css';
 
 const ProtectedRoute = ({ isAuthenticated, allowedRoles, children }) => {
-  const role = localStorage.getItem('userRole');
+  const role = (localStorage.getItem('userRole') || '').trim().toLowerCase();
 
   if (!isAuthenticated) {
     return <Navigate to="/" />;
   }
 
-  if (allowedRoles && !allowedRoles.includes(role)) {
-    toast.error('Acceso denegado: No tienes permisos para ver esta sección.');
-    return <Navigate to="/dashboard" />;
+  if (allowedRoles) {
+    const normalizedAllowed = allowedRoles.map(r => r.toLowerCase());
+    if (!normalizedAllowed.includes(role)) {
+      toast.error(`Acceso denegado: Tu rol no tiene permisos para esta sección.`);
+      return <Navigate to="/dashboard" />;
+    }
   }
 
   return children;

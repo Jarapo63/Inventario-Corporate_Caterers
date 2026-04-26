@@ -17,7 +17,9 @@ const Dashboard = ({ setAuth }) => {
 
   useEffect(() => {
     setUserName(localStorage.getItem('userName') || 'Usuario');
-    setUserRole(localStorage.getItem('userRole') || 'Staff');
+    const rawRole = (localStorage.getItem('userRole') || 'Staff').trim();
+    const formattedRole = rawRole.charAt(0).toUpperCase() + rawRole.slice(1).toLowerCase();
+    setUserRole(formattedRole);
 
     // Cargar inventario inicial
     fetchCatalog().then(data => {

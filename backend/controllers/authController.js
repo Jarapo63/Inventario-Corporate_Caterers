@@ -18,7 +18,8 @@ const login = async (req, res) => {
     
     // Buscamos coincidencia exacta ignorando espacios al inicio o final
     const cleanUsername = username.trim();
-    const user = rows.find(row => (row[0] || '').trim() === cleanUsername && row[1] === password);
+    const cleanPassword = password.trim();
+    const user = rows.find(row => (row[0] || '').trim() === cleanUsername && (row[1] || '').trim() === cleanPassword);
 
     if (!user) {
       return res.status(401).json({ message: 'Credenciales inválidas' });
