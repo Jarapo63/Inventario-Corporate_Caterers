@@ -8,8 +8,8 @@ if (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL && process.env.GOOGLE_PRIVATE_KEY) 
   authClient = new google.auth.GoogleAuth({
     credentials: {
       client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-      // Manejar saltos de línea explícitos o literales que ocurren al pegar en Render
-      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n')
+      // Manejar saltos de línea explícitos o literales que ocurren al pegar en Render, y remover comillas accidentales
+      private_key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n').replace(/"/g, '')
     },
     scopes: ['https://www.googleapis.com/auth/spreadsheets']
   });
