@@ -3,8 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Download, FileText, Loader2, DollarSign, Search } from 'lucide-react';
 import { fetchProviderReconciliation } from '../utils/api';
 import { toast } from 'react-hot-toast';
-import jsPDF from 'jspdf';
-import 'jspdf-autotable';
 import Papa from 'papaparse';
 
 const Reconciliation = () => {
@@ -72,6 +70,16 @@ const Reconciliation = () => {
     }
 
     const csvData = [];
+    
+    // Encabezado del reporte
+    csvData.push({
+      Proveedor: `REPORTE DE CONCILIACIÓN - MES: ${selectedMonth} AÑO: ${selectedYear}`,
+      'ID Pedido (Factura)': '',
+      'Fecha Recepción': '',
+      'Monto Total (USD)': ''
+    });
+    csvData.push({ Proveedor: '', 'ID Pedido (Factura)': '', 'Fecha Recepción': '', 'Monto Total (USD)': '' }); // Fila vacía
+
     filteredData.forEach(group => {
       group.items.forEach(item => {
         csvData.push({
@@ -103,56 +111,6 @@ const Reconciliation = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  };
-
-  // Generar PDF
-  const handleExportPDF = () => {
-    if (filteredData.length === 0) {
-      toast.error('No hay datos para exportar');
-      return;
-    }
-
-    const doc = new jsPDF();
-    
-    doc.setFontSize(18);
-    doc.setTextColor(40);
-    doc.text(`Reporte de Conciliación - ${selectedMonth}/${selectedYear}`, 14, 22);
-    
-    doc.setFontSize(11);
-    doc.setTextColor(100);
-    doc.text('Corporate Caterers - Validación de Cuentas por Pagar (Facturas Reales vs Recepciones)', 14, 30);
-    doc.text(`Total del Periodo: $${grandTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })} USD`, 14, 36);
-
-    const tableColumn = ["Proveedor", "ID Pedido / Factura", "Fecha de Recepción", "Monto (USD)"];
-    const tableRows = [];
-
-    filteredData.forEach(group => {
-      group.items.forEach(item => {
-        tableRows.push([
-          group.provider,
-          item.orderId,
-          new Date(item.date).toLocaleDateString(),
-          `$${item.totalCost.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
-        ]);
-      });
-      
-      // Subtotal highlight
-      tableRows.push([
-        { content: `TOTAL ${group.provider.toUpperCase()}`, colSpan: 3, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } },
-        { content: `$${group.subTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, styles: { fontStyle: 'bold', fillColor: [240, 240, 240] } }
-      ]);
-    });
-
-    doc.autoTable({
-      head: [tableColumn],
-      body: tableRows,
-      startY: 45,
-      theme: 'grid',
-      headStyles: { fillColor: [15, 23, 42], textColor: 255 },
-      styles: { fontSize: 9 }
-    });
-
-    doc.save(`Conciliacion_Contable_${selectedMonth}_${selectedYear}.pdf`);
   };
 
   const years = Array.from({length: 5}, (_, i) => currentDate.getFullYear() - i);
@@ -207,13 +165,14 @@ const Reconciliation = () => {
             </div>
 
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button onClick={handleExportCSV} className="button" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#10b981' }}>
+              <button 
+                onClick={handleExportCSV} 
+                className="button" 
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#10b981', cursor: 'pointer' }}
+                title="Descargar reporte en formato Excel/CSV"
+              >
                 <Download size={18} />
-                CSV
-              </button>
-              <button onClick={handleExportPDF} className="button" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#ef4444' }}>
-                <FileText size={18} />
-                PDF
+                Exportar CSV
               </button>
             </div>
           </div>
