@@ -266,6 +266,32 @@ const Dashboard = ({ setAuth }) => {
               <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.875rem' }}>Visualiza las métricas clave de tus movimientos, fluctuaciones de precios y costo semanal calculado.</p>
             </div>
           </div>
+
+          <div 
+            className="glass-panel animate-fade-in" 
+            style={{ 
+              marginTop: '1rem', 
+              padding: '2rem', 
+              display: 'flex', 
+              alignItems: 'center', 
+              justifyContent: 'space-between',
+              cursor: 'pointer', 
+              background: 'linear-gradient(45deg, rgba(16, 185, 129, 0.15), rgba(30, 41, 59, 0.8))',
+              transition: 'transform 0.2s',
+              border: '1px solid #10b981'
+            }}
+            onClick={() => navigate('/reconciliation')}
+            onMouseOver={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+            onMouseOut={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            <div>
+              <h3 style={{ margin: '0 0 0.5rem 0', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <ClipboardList size={24} color="#10b981" />
+                Conciliación Contable (Proveedores)
+              </h3>
+              <p style={{ color: 'var(--text-muted)', margin: 0, fontSize: '0.875rem' }}>Valida y exporta los montos a pagar por proveedor basándose en las recepciones reales del mes.</p>
+            </div>
+          </div>
         </>
         )}
 

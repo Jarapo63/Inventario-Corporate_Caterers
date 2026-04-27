@@ -11,6 +11,7 @@ import ReportsOrders from './pages/ReportsOrders';
 import ProviderManager from './pages/ProviderManager';
 import CancelledReports from './pages/CancelledReports';
 import UserManager from './pages/UserManager';
+import Reconciliation from './pages/Reconciliation';
 import './index.css';
 
 const ProtectedRoute = ({ isAuthenticated, allowedRoles, children }) => {
@@ -95,6 +96,12 @@ function App() {
         <Route path="/users" element={
           <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin']}>
             <UserManager />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/reconciliation" element={
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin']}>
+            <Reconciliation />
           </ProtectedRoute>
         } />
         

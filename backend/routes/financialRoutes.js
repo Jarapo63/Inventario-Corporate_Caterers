@@ -5,7 +5,8 @@ const {
   getMonthlyOrders, 
   getPriceFluctuation, 
   getWeeklyCost, 
-  getInventoryMovements 
+  getInventoryMovements,
+  getProviderReconciliation
 } = require('../controllers/financialController');
 const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 
@@ -14,5 +15,6 @@ router.get('/monthly-orders', verifyToken, verifyRole(['Admin']), getMonthlyOrde
 router.get('/price-fluctuation', verifyToken, verifyRole(['Admin']), getPriceFluctuation);
 router.get('/weekly-cost', verifyToken, verifyRole(['Admin']), getWeeklyCost);
 router.get('/inventory-movements', verifyToken, verifyRole(['Admin']), getInventoryMovements);
+router.get('/provider-reconciliation', verifyToken, verifyRole(['Admin']), getProviderReconciliation);
 
 module.exports = router;

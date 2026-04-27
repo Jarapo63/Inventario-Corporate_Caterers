@@ -202,6 +202,13 @@ export const fetchInventoryMovements = async () => {
   return data;
 };
 
+export const fetchProviderReconciliation = async () => {
+  const res = await fetch(`${API_URL}/finance/provider-reconciliation`, { headers: getAuthHeaders() });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message);
+  return data;
+};
+
 // Purchase Orders
 export const fetchPendingOrders = async () => {
   const res = await fetch(`${API_URL}/purchase/orders`, { headers: getAuthHeaders() });
