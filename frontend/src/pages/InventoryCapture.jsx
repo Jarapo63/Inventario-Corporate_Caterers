@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Save, Loader2, AlertCircle, Search } from 'lucide-react';
 import { fetchCatalog, getAuthHeaders, submitInventory } from '../utils/api';
 import { toast } from 'react-hot-toast';
 
@@ -18,6 +18,7 @@ const InventoryCapture = () => {
     SEMANAL: {},
     EXTRAORDINARIO: {}
   });
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     const orderId = `PED-${Math.floor(Date.now() / 1000)}`;
@@ -138,6 +139,19 @@ const InventoryCapture = () => {
             Extraordinario
           </button>
         </div>
+        
+        {/* Buscador de Productos */}
+        <div style={{ marginTop: '1rem', position: 'relative' }}>
+          <Search style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} size={20} />
+          <input 
+            type="text" 
+            placeholder="Buscar producto por nombre o ID..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="input-field"
+            style={{ paddingLeft: '3rem', marginTop: 0 }}
+          />
+        </div>
       </div>
 
       {/* Lista de Captura */}
@@ -158,6 +172,15 @@ const InventoryCapture = () => {
              const actualIdx = idx + 1;
              const isInactive = (row[10] || '').trim().toLowerCase() === 'inactivo';
              if (isInactive) return; 
+
+             if (searchTerm.trim()) {
+               const searchLower = searchTerm.toLowerCase();
+               const productName = (row[2] || '').toLowerCase();
+               const productId = (row[0] || '').toLowerCase();
+               if (!productName.includes(searchLower) && !productId.includes(searchLower)) {
+                 return;
+               }
+             }
 
              const areaName = (row[6] || 'Sin Área').trim();
              if (!groupedByArea[areaName]) {
