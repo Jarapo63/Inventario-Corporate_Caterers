@@ -46,13 +46,13 @@ function App() {
         <Route path="/" element={isAuthenticated ? <Navigate to="/dashboard" /> : <Login setAuth={setIsAuthenticated} />} />
         
         <Route path="/dashboard" element={
-          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager', 'Asistente', 'Subcheff']}>
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager', 'Manager_Drivers', 'Manager_Kitchen', 'Asistente', 'Subcheff']}>
             <Dashboard setAuth={setIsAuthenticated} />
           </ProtectedRoute>
         } />
         
         <Route path="/capture" element={
-          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager']}>
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager', 'Manager_Drivers', 'Manager_Kitchen']}>
             <InventoryCapture />
           </ProtectedRoute>
         } />
@@ -64,7 +64,7 @@ function App() {
         } />
         
         <Route path="/reception" element={
-          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager', 'Asistente', 'Subcheff']}>
+          <ProtectedRoute isAuthenticated={isAuthenticated} allowedRoles={['Admin', 'Manager', 'Manager_Drivers', 'Manager_Kitchen', 'Asistente', 'Subcheff']}>
             <Reception />
           </ProtectedRoute>
         } />
