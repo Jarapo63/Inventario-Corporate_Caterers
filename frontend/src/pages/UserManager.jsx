@@ -177,6 +177,8 @@ const UserManager = () => {
                 >
                   <option value="Admin">Admin</option>
                   <option value="Manager">Manager</option>
+                  <option value="Manager_Drivers">Manager_Drivers</option>
+                  <option value="Manager_Kitchen">Manager_Kitchen</option>
                   <option value="Asistente">Asistente</option>
                   <option value="Subcheff">Subcheff</option>
                 </select>
@@ -235,6 +237,8 @@ const UserManager = () => {
                            <select className="input-field" style={{ margin: 0, padding: '0.4rem' }} value={editForm.role} onChange={e => setEditForm({...editForm, role: e.target.value})} disabled={isSaving}>
                              <option value="Admin">Admin</option>
                              <option value="Manager">Manager</option>
+                             <option value="Manager_Drivers">Manager_Drivers</option>
+                             <option value="Manager_Kitchen">Manager_Kitchen</option>
                              <option value="Asistente">Asistente</option>
                              <option value="Subcheff">Subcheff</option>
                            </select>
@@ -243,8 +247,8 @@ const UserManager = () => {
                             padding: '0.2rem 0.6rem', 
                             borderRadius: '12px', 
                             fontSize: '0.8rem', 
-                            backgroundColor: u.role === 'Admin' ? 'rgba(59, 130, 246, 0.2)' : u.role === 'Manager' ? 'rgba(16, 185, 129, 0.2)' : u.role === 'Asistente' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(234, 179, 8, 0.2)',
-                            color: u.role === 'Admin' ? '#60a5fa' : u.role === 'Manager' ? '#34d399' : u.role === 'Asistente' ? '#c084fc' : '#facc15'
+                            backgroundColor: u.role === 'Admin' ? 'rgba(59, 130, 246, 0.2)' : u.role.includes('Manager') ? 'rgba(16, 185, 129, 0.2)' : u.role === 'Asistente' ? 'rgba(168, 85, 247, 0.2)' : 'rgba(234, 179, 8, 0.2)',
+                            color: u.role === 'Admin' ? '#60a5fa' : u.role.includes('Manager') ? '#34d399' : u.role === 'Asistente' ? '#c084fc' : '#facc15'
                           }}>
                             {u.role}
                           </span>
