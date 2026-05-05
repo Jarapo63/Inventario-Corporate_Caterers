@@ -45,24 +45,39 @@ const submitInventory = async (req, res) => {
     const hasOrders = sheetMeta.data.sheets.some(s => s.properties.title === 'ORDENES_COMPRA_HISTORICO');
     
     let maxConsecutive = 0;
+    let todayExistingOrderId = null;
+
     if (hasOrders) {
       const resp = await sheets.spreadsheets.values.get({
         spreadsheetId: SHEET_ID,
         range: "'ORDENES_COMPRA_HISTORICO'!A:A"
       });
       const ids = resp.data.values || [];
-      const regex = new RegExp(`^${prefix}-\\d{4}${yyyy}-(\\d{3})$`);
+      const regexYear = new RegExp(`^${prefix}-\\d{4}${yyyy}-(\\d{3})$`);
+      const regexToday = new RegExp(`^${prefix}-${dateStr}-(\\d{3})$`);
+      
       ids.forEach(row => {
          const idStr = row[0] || '';
-         const match = idStr.match(regex);
-         if (match) {
-            const cons = parseInt(match[1], 10);
+         const matchYear = idStr.match(regexYear);
+         if (matchYear) {
+            const cons = parseInt(matchYear[1], 10);
             if (cons > maxConsecutive) maxConsecutive = cons;
+         }
+         
+         if (type === 'SEMANAL' && idStr.match(regexToday)) {
+            todayExistingOrderId = idStr;
          }
       });
     }
-    const nextConsStr = String(maxConsecutive + 1).padStart(3, '0');
-    const finalOrderId = `${prefix}-${dateStr}-${nextConsStr}`;
+
+    let finalOrderId;
+    if (type === 'SEMANAL' && todayExistingOrderId) {
+      finalOrderId = todayExistingOrderId;
+    } else {
+      const nextConsStr = String(maxConsecutive + 1).padStart(3, '0');
+      finalOrderId = `${prefix}-${dateStr}-${nextConsStr}`;
+    }
+    
     const username = req.user ? req.user.username : 'Sistema';
     
     const movData = [];

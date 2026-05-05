@@ -19,11 +19,13 @@ const InventoryCapture = () => {
     EXTRAORDINARIO: {}
   });
   const [searchTerm, setSearchTerm] = useState('');
+  const [userRole, setUserRole] = useState('');
 
   useEffect(() => {
     const orderId = `PED-${Math.floor(Date.now() / 1000)}`;
     setCaptureSessionId(orderId);
     setCaptureDate(new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }));
+    setUserRole(localStorage.getItem('userRole') || '');
     loadCatalog();
   }, []);
 
@@ -160,7 +162,12 @@ const InventoryCapture = () => {
           <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No se encontraron productos en el catálogo.</p>
         )}
 
-        {Object.keys(catalog).map(sheetName => {
+        {Object.keys(catalog).filter(sheetName => {
+          if (sheetName === 'Holiday') return true;
+          if (userRole === 'Manager_Drivers' && sheetName !== 'Drivers List') return false;
+          if (userRole === 'Manager_Kitchen' && sheetName !== 'Kitchen List') return false;
+          return true;
+        }).map(sheetName => {
           const rows = catalog[sheetName];
           if (!rows || rows.length <= 1) return null;
           
