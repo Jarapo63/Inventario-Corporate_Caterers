@@ -18,8 +18,7 @@ const Dashboard = ({ setAuth }) => {
   useEffect(() => {
     setUserName(localStorage.getItem('userName') || 'Usuario');
     const rawRole = (localStorage.getItem('userRole') || 'Staff').trim();
-    const formattedRole = rawRole.charAt(0).toUpperCase() + rawRole.slice(1).toLowerCase();
-    setUserRole(formattedRole);
+    setUserRole(rawRole);
 
     // Cargar inventario inicial
     fetchCatalog().then(data => {
@@ -110,7 +109,7 @@ const Dashboard = ({ setAuth }) => {
         <div className="animate-fade-in" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
           
           {/* Módulo de Inventario Activo (Admin / Manager) */}
-          {(userRole === 'Admin' || userRole === 'Manager') && (
+          {(userRole === 'Admin' || userRole.includes('Manager')) && (
             <div 
               className="glass-panel" 
               style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'transform 0.2s' }}
@@ -125,7 +124,7 @@ const Dashboard = ({ setAuth }) => {
           )}
 
           {/* Módulo Recepción (Admin / Manager / Subcheff / Asistente) */}
-          {(userRole === 'Admin' || userRole === 'Manager' || userRole === 'Subcheff' || userRole === 'Asistente') && (
+          {(userRole === 'Admin' || userRole.includes('Manager') || userRole === 'Subcheff' || userRole === 'Asistente') && (
             <div 
               className="glass-panel" 
               style={{ padding: '2rem', display: 'flex', flexDirection: 'column', alignItems: 'center', cursor: 'pointer', transition: 'transform 0.2s' }}
@@ -306,7 +305,7 @@ const Dashboard = ({ setAuth }) => {
             )}
           </div>
           
-          {(userRole === 'Admin' || userRole === 'Manager' || userRole === 'Subcheff' || userRole === 'Asistente') && alerts.length > 0 && (
+          {(userRole === 'Admin' || userRole.includes('Manager') || userRole === 'Subcheff' || userRole === 'Asistente') && alerts.length > 0 && (
             <div className="glass-panel" style={{ flex: 1, minWidth: '300px', border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.05)' }}>
               <div style={{ padding: '1rem', borderBottom: '1px solid rgba(239, 68, 68, 0.2)' }}>
                 <h4 style={{ margin: 0, color: '#ef4444', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
