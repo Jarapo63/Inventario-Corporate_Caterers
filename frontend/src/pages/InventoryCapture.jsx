@@ -34,10 +34,16 @@ const InventoryCapture = () => {
     if (savedCart) {
       try {
         const parsed = JSON.parse(savedCart);
-        setCaptureSessionId(parsed.sessionId);
-        setCaptureDate(parsed.captureDate);
-        setCaptureType(parsed.captureType || 'SEMANAL');
-        setRequisitions(parsed.requisitions);
+        if (parsed.requisitions && Object.keys(parsed.requisitions).length > 0) {
+           setCaptureSessionId(parsed.sessionId);
+           setCaptureDate(parsed.captureDate);
+           setCaptureType(parsed.captureType || 'SEMANAL');
+           setRequisitions(parsed.requisitions);
+           // Notificamos al usuario que recuperamos su sesión
+           toast.success("Borrador recuperado. Puedes continuar tu captura.", { duration: 3000, icon: '🛒' });
+        } else {
+           initializeNewSession();
+        }
       } catch (e) {
         console.error("Error parsing cart data", e);
         initializeNewSession();
@@ -49,19 +55,6 @@ const InventoryCapture = () => {
     setUserRole(localStorage.getItem('userRole') || '');
     loadCatalog();
   }, []);
-
-  useEffect(() => {
-    if (captureSessionId && !loading) {
-      const user = localStorage.getItem('userName') || 'default';
-      const cartData = {
-        sessionId: captureSessionId,
-        captureDate: captureDate,
-        captureType: captureType,
-        requisitions: requisitions
-      };
-      localStorage.setItem(`inventoryCart_${user}`, JSON.stringify(cartData));
-    }
-  }, [requisitions, captureType, captureSessionId, captureDate, loading]);
 
   const loadCatalog = async () => {
     try {
@@ -75,10 +68,40 @@ const InventoryCapture = () => {
   };
 
   const handleReqChange = (sheet, index, value) => {
-    setRequisitions(prev => ({
-      ...prev,
-      [captureType]: { ...prev[captureType], [`${sheet}-${index}`]: value }
-    }));
+    setRequisitions(prev => {
+      const newReqs = {
+        ...prev,
+        [captureType]: { ...prev[captureType], [`${sheet}-${index}`]: value }
+      };
+      
+      // Autoguardado síncrono ultra-seguro
+      if (captureSessionId) {
+        const user = localStorage.getItem('userName') || 'default';
+        const cartData = {
+          sessionId: captureSessionId,
+          captureDate: captureDate,
+          captureType: captureType,
+          requisitions: newReqs
+        };
+        localStorage.setItem(`inventoryCart_${user}`, JSON.stringify(cartData));
+      }
+      
+      return newReqs;
+    });
+  };
+
+  const handleCaptureTypeChange = (type) => {
+    setCaptureType(type);
+    if (captureSessionId) {
+      const user = localStorage.getItem('userName') || 'default';
+      const cartData = {
+        sessionId: captureSessionId,
+        captureDate: captureDate,
+        captureType: type,
+        requisitions: requisitions
+      };
+      localStorage.setItem(`inventoryCart_${user}`, JSON.stringify(cartData));
+    }
   };
 
   const handleSave = async () => {
@@ -164,13 +187,13 @@ const InventoryCapture = () => {
       <div style={{ padding: '1rem 1rem 0 1rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(15, 23, 42, 0.5)', padding: '0.5rem', borderRadius: '12px' }}>
           <button 
-            onClick={() => setCaptureType('SEMANAL')} 
+            onClick={() => handleCaptureTypeChange('SEMANAL')} 
             style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', background: captureType === 'SEMANAL' ? 'var(--primary)' : 'transparent', color: captureType === 'SEMANAL' ? 'white' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s' }}
           >
             Semanal
           </button>
           <button 
-            onClick={() => setCaptureType('EXTRAORDINARIO')} 
+            onClick={() => handleCaptureTypeChange('EXTRAORDINARIO')} 
             style={{ flex: 1, padding: '0.75rem', borderRadius: '8px', border: 'none', background: captureType === 'EXTRAORDINARIO' ? 'var(--danger)' : 'transparent', color: captureType === 'EXTRAORDINARIO' ? 'white' : 'var(--text-muted)', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
           >
             <AlertCircle size={16} />
