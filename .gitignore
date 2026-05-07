@@ -4,3 +4,4 @@ node_modules/
 dist/
 build/
 .npm/
+app-inventario-catering-*.json

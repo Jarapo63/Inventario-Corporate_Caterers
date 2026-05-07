@@ -21,13 +21,47 @@ const InventoryCapture = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [userRole, setUserRole] = useState('');
 
-  useEffect(() => {
+  const initializeNewSession = () => {
     const orderId = `PED-${Math.floor(Date.now() / 1000)}`;
     setCaptureSessionId(orderId);
     setCaptureDate(new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }));
+  };
+
+  useEffect(() => {
+    const user = localStorage.getItem('userName') || 'default';
+    const savedCart = localStorage.getItem(`inventoryCart_${user}`);
+    
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart);
+        setCaptureSessionId(parsed.sessionId);
+        setCaptureDate(parsed.captureDate);
+        setCaptureType(parsed.captureType || 'SEMANAL');
+        setRequisitions(parsed.requisitions);
+      } catch (e) {
+        console.error("Error parsing cart data", e);
+        initializeNewSession();
+      }
+    } else {
+      initializeNewSession();
+    }
+    
     setUserRole(localStorage.getItem('userRole') || '');
     loadCatalog();
   }, []);
+
+  useEffect(() => {
+    if (captureSessionId && !loading) {
+      const user = localStorage.getItem('userName') || 'default';
+      const cartData = {
+        sessionId: captureSessionId,
+        captureDate: captureDate,
+        captureType: captureType,
+        requisitions: requisitions
+      };
+      localStorage.setItem(`inventoryCart_${user}`, JSON.stringify(cartData));
+    }
+  }, [requisitions, captureType, captureSessionId, captureDate, loading]);
 
   const loadCatalog = async () => {
     try {
@@ -78,10 +112,12 @@ const InventoryCapture = () => {
       
       toast.success(result.message); 
       
-      setCaptureSessionId(`PED-${Math.floor(Date.now() / 1000)}`);
-      setCaptureDate(new Date().toLocaleDateString('es-MX', { weekday: 'long', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }));
+      // Limpiar el carrito de la memoria local
+      const user = localStorage.getItem('userName') || 'default';
+      localStorage.removeItem(`inventoryCart_${user}`);
 
-      setRequisitions(prev => ({ ...prev, [captureType]: {} }));
+      initializeNewSession();
+      setRequisitions({ SEMANAL: {}, EXTRAORDINARIO: {} });
       
       navigate('/dashboard');
     } catch (err) {

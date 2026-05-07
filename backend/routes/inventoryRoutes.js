@@ -7,6 +7,6 @@ const { verifyToken, verifyRole } = require('../middleware/authMiddleware');
 router.get('/', verifyToken, getCatalog);
 
 // Solo Managers y Admins pueden cerrar el ciclo de inventario (Submit)
-router.post('/submit', verifyToken, verifyRole(['Admin', 'Manager']), submitInventory);
+router.post('/submit', verifyToken, verifyRole(['Admin', 'Manager', 'Manager_Drivers', 'Manager_Kitchen']), submitInventory);
 
 module.exports = router;
