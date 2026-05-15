@@ -117,7 +117,7 @@ const ProductManager = () => {
     newRow[1] = editForm.prov;
     newRow[2] = editForm.name;
     newRow[3] = editForm.uom;
-    newRow[4] = editForm.qtyInside !== '' ? parseFloat(editForm.qtyInside) : 1;
+    newRow[4] = editForm.qtyInside !== '' ? parseFloat(String(editForm.qtyInside).replace(/,/g, '')) : 1;
     newRow[5] = editForm.idProv;
     newRow[6] = editForm.area;
     newRow[7] = editForm.minStock !== '' ? parseFloat(editForm.minStock) : '';
@@ -156,7 +156,7 @@ const ProductManager = () => {
     newRow[1] = addForm.prov;
     newRow[2] = addForm.name;
     newRow[3] = addForm.uom;
-    newRow[4] = addForm.qtyInside !== '' ? parseFloat(addForm.qtyInside) : 1;
+    newRow[4] = addForm.qtyInside !== '' ? parseFloat(String(addForm.qtyInside).replace(/,/g, '')) : 1;
     newRow[5] = addForm.idProv;
     newRow[6] = addForm.area; // Área Física
     newRow[7] = addForm.minStock;
@@ -240,7 +240,7 @@ const ProductManager = () => {
               }} placeholder="Ej. Cooler" /></div>
               <div style={{ gridColumn: '1 / -1' }}><label>Nombre Completo</label><input className="input-field" value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} /></div>
               <div><label>U. Medida</label><input className="input-field" value={addForm.uom} onChange={e => setAddForm({...addForm, uom: e.target.value})} /></div>
-              <div><label>Cant. Dentro</label><input className="input-field" type="number" step="1" value={addForm.qtyInside} onChange={e => setAddForm({...addForm, qtyInside: e.target.value})} /></div>
+              <div><label>Cant. Dentro</label><input className="input-field" type="text" inputMode="numeric" value={addForm.qtyInside} onChange={e => setAddForm({...addForm, qtyInside: e.target.value})} placeholder="Ej. 100,000" /></div>
               <div><label>Min Stock</label><input className="input-field" type="number" step="1" value={addForm.minStock} onChange={e => setAddForm({...addForm, minStock: e.target.value})} /></div>
               <div><label>Precio Unit.</label><input className="input-field" type="number" step="0.01" value={addForm.price} onChange={e => setAddForm({...addForm, price: e.target.value})} /></div>
             </div>
@@ -304,7 +304,7 @@ const ProductManager = () => {
                                 <div><label>Id_Prod_Prov</label><input className="input-field" value={editForm.idProv} onChange={e => setEditForm({...editForm, idProv: e.target.value})} /></div>
                                 <div><label>Área Fca.</label><input className="input-field" value={editForm.area} onChange={e => setEditForm({...editForm, area: e.target.value})} /></div>
                                 <div><label>Unidad</label><input className="input-field" value={editForm.uom} onChange={e => setEditForm({...editForm, uom: e.target.value})} /></div>
-                                <div><label>Cant. Dentro</label><input className="input-field" type="number" step="1" value={editForm.qtyInside} onChange={e => setEditForm({...editForm, qtyInside: e.target.value})} /></div>
+                                <div><label>Cant. Dentro</label><input className="input-field" type="text" inputMode="numeric" value={editForm.qtyInside} onChange={e => setEditForm({...editForm, qtyInside: e.target.value})} placeholder="Ej. 100,000" /></div>
                                 <div><label>Min Stock</label><input className="input-field" type="number" step="1" value={editForm.minStock} onChange={e => setEditForm({...editForm, minStock: e.target.value})} /></div>
                                 <div><label>Precio Unit.</label><input className="input-field" type="number" step="0.01" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} /></div>
                                 <div>

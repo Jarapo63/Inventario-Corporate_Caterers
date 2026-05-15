@@ -113,7 +113,7 @@ const InventoryCapture = () => {
       const [sheet, idx] = key.split('-');
       const row = catalog[sheet][parseInt(idx)];
 
-      let faltante = Math.ceil(parseFloat(reqStr) || 0); // Requerimiento es 100% manual e independiente
+      let faltante = Math.ceil(parseFloat(String(reqStr).replace(/,/g, '')) || 0); // Requerimiento es 100% manual e independiente
 
       return {
         idProducto: row[0] || `Unknown-${idx}`,
@@ -283,12 +283,11 @@ const InventoryCapture = () => {
                           </div>
                           <div style={{ flex: '0 0 100px', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginLeft: 'auto' }}>
                             <input 
-                              type="number" 
-                              min="0"
-                              step="1"
+                              type="text" 
+                              inputMode="numeric"
                               placeholder={captureType === 'SEMANAL' ? "A Pedir" : "Cant."}
                               className="input-field" 
-                              style={{ marginTop: 0, textAlign: 'center', padding: '0.5rem', fontSize: '0.95rem', width: '100px', background: captureType === 'EXTRAORDINARIO' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(56, 189, 248, 0.1)' }}
+                              style={{ marginTop: 0, textAlign: 'center', padding: '0.5rem', fontSize: '0.95rem', width: '120px', background: captureType === 'EXTRAORDINARIO' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(56, 189, 248, 0.1)' }}
                               value={requisitions[captureType][`${sheetName}-${actualIdx}`] || ''}
                               onChange={(e) => handleReqChange(sheetName, actualIdx, e.target.value)}
                             />
