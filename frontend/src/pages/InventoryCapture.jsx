@@ -278,7 +278,7 @@ const InventoryCapture = () => {
                             <span style={{ display: 'block', fontWeight: 600, fontSize: '1.1rem', lineHeight: '1.3' }}>{row[2] || 'Sin Nombre'}</span>
                             <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', display: 'block', marginTop: '0.4rem' }}>
                               ID: {row[0]} | Id_Prod_Prov: {row[5] || '-'} | UOM: {row[3]} <br/>
-                              <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '1rem', display: 'inline-block', marginTop: '0.2rem' }}>Min Stock req: {row[7] || 'N/A'}</span>
+                              <span style={{ color: 'var(--accent)', fontWeight: 600, fontSize: '1rem', display: 'inline-block', marginTop: '0.2rem' }}>Min Stock req: {row[7] ? parseFloat(row[7]).toFixed(2) : 'N/A'}</span>
                             </span>
                           </div>
                           <div style={{ flex: '0 0 100px', display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', marginLeft: 'auto' }}>

@@ -241,7 +241,7 @@ const ProductManager = () => {
               <div style={{ gridColumn: '1 / -1' }}><label>Nombre Completo</label><input className="input-field" value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} /></div>
               <div><label>U. Medida</label><input className="input-field" value={addForm.uom} onChange={e => setAddForm({...addForm, uom: e.target.value})} /></div>
               <div><label>Cant. Dentro</label><input className="input-field" type="text" inputMode="numeric" value={addForm.qtyInside} onChange={e => setAddForm({...addForm, qtyInside: e.target.value})} placeholder="Ej. 100,000" /></div>
-              <div><label>Min Stock</label><input className="input-field" type="number" step="1" value={addForm.minStock} onChange={e => setAddForm({...addForm, minStock: e.target.value})} /></div>
+              <div><label>Min Stock</label><input className="input-field" type="number" step="0.01" value={addForm.minStock} onChange={e => setAddForm({...addForm, minStock: e.target.value})} /></div>
               <div><label>Precio Unit.</label><input className="input-field" type="number" step="0.01" value={addForm.price} onChange={e => setAddForm({...addForm, price: e.target.value})} /></div>
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
@@ -305,7 +305,7 @@ const ProductManager = () => {
                                 <div><label>Área Fca.</label><input className="input-field" value={editForm.area} onChange={e => setEditForm({...editForm, area: e.target.value})} /></div>
                                 <div><label>Unidad</label><input className="input-field" value={editForm.uom} onChange={e => setEditForm({...editForm, uom: e.target.value})} /></div>
                                 <div><label>Cant. Dentro</label><input className="input-field" type="text" inputMode="numeric" value={editForm.qtyInside} onChange={e => setEditForm({...editForm, qtyInside: e.target.value})} placeholder="Ej. 100,000" /></div>
-                                <div><label>Min Stock</label><input className="input-field" type="number" step="1" value={editForm.minStock} onChange={e => setEditForm({...editForm, minStock: e.target.value})} /></div>
+                                <div><label>Min Stock</label><input className="input-field" type="number" step="0.01" value={editForm.minStock} onChange={e => setEditForm({...editForm, minStock: e.target.value})} /></div>
                                 <div><label>Precio Unit.</label><input className="input-field" type="number" step="0.01" value={editForm.price} onChange={e => setEditForm({...editForm, price: e.target.value})} /></div>
                                 <div>
                                   <label>Estado</label>
@@ -335,7 +335,7 @@ const ProductManager = () => {
                                 {isInactive && <span style={{ marginLeft: '0.5rem', fontSize: '0.75rem', background: 'var(--danger)', color: 'white', padding: '0.1rem 0.4rem', borderRadius: '4px', verticalAlign: 'text-bottom' }}>INACTIVO</span>}
                               </span>
                               <span style={{ fontSize: '0.95rem', color: 'var(--text-muted)', marginTop: '0.3rem', display: 'block' }}>
-                                ID: <span style={{color:'var(--primary)'}}>{row[0]}</span> | Id_Prod_Prov: {row[5] || '-'} | Req. Base: <span style={{color:'var(--accent)', fontWeight:600}}>{row[7] || '-'}</span> | Precio: ${parseFloat(row[8] || 0).toFixed(2)}
+                                ID: <span style={{color:'var(--primary)'}}>{row[0]}</span> | Id_Prod_Prov: {row[5] || '-'} | Req. Base: <span style={{color:'var(--accent)', fontWeight:600}}>{row[7] ? parseFloat(row[7]).toFixed(2) : '-'}</span> | Precio: ${parseFloat(row[8] || 0).toFixed(2)}
                               </span>
                             </div>
                             <button onClick={() => handleEditClick(originalIdx, row)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', marginLeft: '1rem' }}>
