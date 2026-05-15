@@ -204,6 +204,12 @@ const Analytics = () => {
                    onClick={() => { setFilterType('Ext'); setFilterOrderId('ALL'); }}>
                   Extras
                 </button>
+                <button 
+                   className={filterType === 'SR' ? 'btn-primary' : 'btn-secondary'} 
+                   style={{ width: 'auto', padding: '0.5rem 1rem', background: filterType === 'SR' ? 'var(--accent)' : 'var(--bg-dark)', color: filterType === 'SR' ? '#000' : 'white' }} 
+                   onClick={() => { setFilterType('SR'); setFilterOrderId('ALL'); }}>
+                  Especiales (SR)
+                </button>
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto', flexWrap: 'wrap' }}>
