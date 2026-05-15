@@ -1,7 +1,7 @@
 const { sheets, SHEET_ID } = require('../db');
 
 const getRowIndices = async () => {
-    const CATALOG_TABS = ['Drivers List', 'Kitchen List', 'Holiday'];
+    const CATALOG_TABS = ['Drivers List', 'Kitchen List', 'Holiday', 'Special Request'];
     const ranges = CATALOG_TABS.map(tab => `'${tab}'!A:Z`);
     const res = await sheets.spreadsheets.values.batchGet({ spreadsheetId: SHEET_ID, ranges });
     const productLocations = {};
