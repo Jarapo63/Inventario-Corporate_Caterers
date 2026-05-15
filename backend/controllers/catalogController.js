@@ -104,4 +104,78 @@ const addProduct = async (req, res) => {
   }
 };
 
-module.exports = { updateProduct, addProduct };
+const insertProduct = async (req, res) => {
+  const { sheetName, targetRowNum, newValues, inactivatePrevious } = req.body;
+  if (!sheetName || !targetRowNum || !newValues) {
+    return res.status(400).json({ message: 'Faltan parámetros para la inserción.' });
+  }
+
+  try {
+    // 1. Obtener el sheetId dinámicamente
+    const meta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
+    const sheet = meta.data.sheets.find(s => s.properties.title === sheetName);
+    if (!sheet) throw new Error(`Pestaña ${sheetName} no encontrada.`);
+    const sheetId = sheet.properties.sheetId;
+
+    // 2. Insertar una fila nueva debajo de targetRowNum
+    // targetRowNum es 1-indexado (ej. fila 2 en la UI). startIndex es 0-indexado.
+    // Para insertar debajo de la fila 2 (targetRowNum = 2), startIndex = 2, endIndex = 3.
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      requestBody: {
+        requests: [
+          {
+            insertDimension: {
+              range: {
+                sheetId: sheetId,
+                dimension: 'ROWS',
+                startIndex: targetRowNum,
+                endIndex: targetRowNum + 1
+              },
+              inheritFromBefore: false
+            }
+          }
+        ]
+      }
+    });
+
+    // 3. Preparar las actualizaciones de datos
+    const requestsData = [];
+    
+    // Si es un reemplazo, inactivar la fila vieja (columna K es índice 10)
+    if (inactivatePrevious) {
+      requestsData.push({
+        range: `'${sheetName}'!K${targetRowNum}`,
+        values: [['Inactivo']]
+      });
+    }
+
+    // Escribir los datos del nuevo producto en la fila recién creada (targetRowNum + 1)
+    const newRowIndex = parseInt(targetRowNum) + 1;
+    requestsData.push({
+      range: `'${sheetName}'!A${newRowIndex}:K${newRowIndex}`,
+      values: [[
+        newValues[0], newValues[1], newValues[2], newValues[3], newValues[4],
+        newValues[5], newValues[6], newValues[7], newValues[8],
+        `=IF(INDIRECT("E"&ROW())>0, INDIRECT("I"&ROW())/INDIRECT("E"&ROW()), 0)`,
+        'Activo'
+      ]]
+    });
+
+    // Ejecutar escritura de valores
+    await sheets.spreadsheets.values.batchUpdate({
+      spreadsheetId: SHEET_ID,
+      requestBody: {
+        valueInputOption: 'USER_ENTERED',
+        data: requestsData
+      }
+    });
+
+    res.status(200).json({ message: 'Producto insertado con éxito en la posición solicitada.' });
+  } catch (error) {
+    console.error('Error insertando producto posicional:', error.message);
+    res.status(500).json({ message: `API Error: ${error.message}` });
+  }
+};
+
+module.exports = { updateProduct, addProduct, insertProduct };

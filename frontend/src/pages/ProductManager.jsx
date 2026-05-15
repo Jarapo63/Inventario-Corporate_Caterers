@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Check, X, PlusCircle, Loader2 } from 'lucide-react';
-import { fetchCatalog, updateProduct, addProduct, fetchProviders } from '../utils/api';
+import { ArrowLeft, Edit2, Check, X, PlusCircle, Loader2, RefreshCw, ArrowDownToLine } from 'lucide-react';
+import { fetchCatalog, updateProduct, addProduct, fetchProviders, insertProduct } from '../utils/api';
 import { toast } from 'react-hot-toast';
 
 const ProductManager = () => {
@@ -15,6 +15,11 @@ const ProductManager = () => {
   const [editingIdx, setEditingIdx] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [isSaving, setIsSaving] = useState(false);
+
+  // Estado para inserción posicional / reemplazo
+  const [insertingIdx, setInsertingIdx] = useState(null);
+  const [insertForm, setInsertForm] = useState({});
+  const [isReplacing, setIsReplacing] = useState(false);
 
   // Estado para un nuevo ítem
   const [isAdding, setIsAdding] = useState(false);
@@ -149,6 +154,43 @@ const ProductManager = () => {
     }
   };
 
+  const handleInsertClick = (idx, originalRow, replace) => {
+    setEditingIdx(null);
+    setInsertingIdx(idx);
+    setIsReplacing(replace);
+    const area = (originalRow[6] || '').trim();
+    setInsertForm({
+      id: getNextId(activeTab, area),
+      prov: '', idProv: '', name: '', uom: originalRow[3] || '', 
+      qtyInside: '1', area: area, minStock: '', price: ''
+    });
+  };
+
+  const handleSaveInsert = async (idx) => {
+    setIsSaving(true);
+    const newRow = new Array(11).fill("");
+    newRow[0] = insertForm.id;
+    newRow[1] = insertForm.prov;
+    newRow[2] = insertForm.name;
+    newRow[3] = insertForm.uom;
+    newRow[4] = insertForm.qtyInside !== '' ? parseFloat(String(insertForm.qtyInside).replace(/,/g, '')) : 1;
+    newRow[5] = insertForm.idProv;
+    newRow[6] = insertForm.area;
+    newRow[7] = insertForm.minStock;
+    newRow[8] = insertForm.price;
+    newRow[10] = 'Activo';
+
+    try {
+      await insertProduct(activeTab, idx + 2, newRow, isReplacing);
+      await loadCatalog();
+      setInsertingIdx(null);
+    } catch (err) {
+      toast.error(`Error al procesar: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleAddNew = async () => {
     setIsSaving(true);
     const newRow = new Array(11).fill("");
@@ -196,7 +238,7 @@ const ProductManager = () => {
         {Object.keys(catalog).map(tab => (
           <button 
             key={tab}
-            onClick={() => { setActiveTab(tab); setEditingIdx(null); setIsAdding(false); }}
+            onClick={() => { setActiveTab(tab); setEditingIdx(null); setInsertingIdx(null); setIsAdding(false); }}
             style={{ 
               padding: '0.5rem 1rem', borderRadius: '20px', border: '1px solid var(--primary)', 
               background: activeTab === tab ? 'var(--primary)' : 'transparent',
@@ -327,6 +369,35 @@ const ProductManager = () => {
                           );
                         }
 
+                        if (isInserting) {
+                          return (
+                            <div key={`insert-${originalIdx}`} className="glass-panel" style={{ padding: '1.5rem', border: '1px solid var(--accent)', borderLeft: '3px solid var(--accent)' }}>
+                              <h4 style={{ marginTop: 0, color: 'var(--accent)', marginBottom: '1rem' }}>
+                                {isReplacing ? 'Reemplazar Producto (El anterior pasará a Inactivo)' : 'Insertar Nuevo Producto Debajo'}
+                              </h4>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                                <div><label>ID / Clave</label><input className="input-field" value={insertForm.id} onChange={e => setInsertForm({...insertForm, id: e.target.value})} /></div>
+                                <div style={{ gridColumn: 'span 2' }}><label>Nuevo Producto</label><input className="input-field" value={insertForm.name} onChange={e => setInsertForm({...insertForm, name: e.target.value})} /></div>
+                                <div><label>Proveedor</label><input list="providers-list" className="input-field" value={insertForm.prov} onChange={e => setInsertForm({...insertForm, prov: e.target.value})} /></div>
+                                <div><label>Id_Prod_Prov</label><input className="input-field" value={insertForm.idProv} onChange={e => setInsertForm({...insertForm, idProv: e.target.value})} /></div>
+                                <div><label>Área Fca.</label><input className="input-field" value={insertForm.area} onChange={e => setInsertForm({...insertForm, area: e.target.value})} /></div>
+                                <div><label>Unidad</label><input className="input-field" value={insertForm.uom} onChange={e => setInsertForm({...insertForm, uom: e.target.value})} /></div>
+                                <div><label>Cant. Dentro</label><input className="input-field" type="text" inputMode="numeric" value={insertForm.qtyInside} onChange={e => setInsertForm({...insertForm, qtyInside: e.target.value})} /></div>
+                                <div><label>Min Stock</label><input className="input-field" type="number" step="0.01" value={insertForm.minStock} onChange={e => setInsertForm({...insertForm, minStock: e.target.value})} /></div>
+                                <div><label>Precio Unit.</label><input className="input-field" type="number" step="0.01" value={insertForm.price} onChange={e => setInsertForm({...insertForm, price: e.target.value})} /></div>
+                              </div>
+                              <div style={{ display: 'flex', gap: '1rem' }}>
+                                <button className="btn-primary" style={{ flex: 1, background: 'var(--accent)', display: 'flex', justifyContent: 'center', gap: '0.5rem' }} onClick={() => handleSaveInsert(originalIdx)} disabled={isSaving}>
+                                  <Check size={18} /> {isSaving ? 'Guardando...' : (isReplacing ? 'Confirmar Reemplazo' : 'Insertar Producto')}
+                                </button>
+                                <button className="btn-primary" style={{ flex: 1, background: 'rgba(255,255,255,0.1)', display: 'flex', justifyContent: 'center', gap: '0.5rem' }} onClick={() => setInsertingIdx(null)}>
+                                  <X size={18} /> Cancelar
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        }
+
                         return (
                           <div key={originalIdx} className="glass-panel" style={{ padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderLeft: '3px solid rgba(251, 191, 36, 0.4)', opacity: isInactive ? 0.6 : 1, filter: isInactive ? 'grayscale(0.5)' : 'none' }}>
                             <div style={{ flex: 1 }}>
@@ -338,9 +409,17 @@ const ProductManager = () => {
                                 ID: <span style={{color:'var(--primary)'}}>{row[0]}</span> | Id_Prod_Prov: {row[5] || '-'} | Req. Base: <span style={{color:'var(--accent)', fontWeight:600}}>{row[7] ? parseFloat(row[7]).toFixed(2) : '-'}</span> | Precio: ${parseFloat(row[8] || 0).toFixed(2)}
                               </span>
                             </div>
-                            <button onClick={() => handleEditClick(originalIdx, row)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer', marginLeft: '1rem' }}>
-                              <Edit2 size={18} />
-                            </button>
+                            <div style={{ display: 'flex', gap: '0.5rem' }}>
+                              <button onClick={() => handleInsertClick(originalIdx, row, true)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: 'var(--danger)', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Reemplazar (Inactivar este e insertar nuevo)">
+                                <RefreshCw size={18} />
+                              </button>
+                              <button onClick={() => handleInsertClick(originalIdx, row, false)} style={{ background: 'rgba(56, 189, 248, 0.1)', border: 'none', color: 'var(--primary)', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Insertar nuevo producto debajo">
+                                <ArrowDownToLine size={18} />
+                              </button>
+                              <button onClick={() => handleEditClick(originalIdx, row)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Editar este producto">
+                                <Edit2 size={18} />
+                              </button>
+                            </div>
                           </div>
                         );
                       })}

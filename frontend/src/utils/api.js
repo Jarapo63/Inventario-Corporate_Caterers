@@ -92,6 +92,17 @@ export const addProduct = async (sheetName, newValues) => {
   return data;
 };
 
+export const insertProduct = async (sheetName, targetRowNum, newValues, inactivatePrevious) => {
+  const res = await fetch(`${API_URL}/catalog/insert`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ sheetName, targetRowNum, newValues, inactivatePrevious })
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.message || 'Error insertando producto posicionalmente');
+  return data;
+};
+
 export const submitInventory = async (inventoryData, type, orderId) => {
   const res = await fetch(`${API_URL}/inventory/submit`, {
     method: 'POST',
