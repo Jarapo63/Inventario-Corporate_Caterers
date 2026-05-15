@@ -28,38 +28,43 @@ const ProductManager = () => {
     id: '', prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '', orderQty: '1' 
   });
 
-  const getNextId = (tab, targetArea) => {
+  const getNextId = (tab, targetArea, cartItems = []) => {
     const items = catalog[tab] || [];
     let max = 0;
     let prefix = '';
 
-    if (targetArea) {
-      for (let i = 1; i < items.length; i++) {
-        const area = (items[i][6] || '').trim();
-        if (area.toLowerCase() === targetArea.toLowerCase()) {
-          const idStr = items[i][0] || '';
-          const match = idStr.match(/^([A-Za-z]+)-?\s*(\d+)$/);
-          if (match) {
-            if (!prefix) prefix = match[1];
-            const num = parseInt(match[2], 10);
-            if (num > max) max = num;
-          }
-        }
-      }
-    }
-
-    if (!prefix) {
-      for (let i = 1; i < items.length; i++) {
-        const idStr = items[i][0] || '';
+    const checkIdStr = (idStr) => {
         const match = idStr.match(/^([A-Za-z]+)-?\s*(\d+)$/);
         if (match) {
           if (!prefix) prefix = match[1];
           const num = parseInt(match[2], 10);
           if (num > max) max = num;
         }
+    };
+
+    if (targetArea) {
+      for (let i = 1; i < items.length; i++) {
+        const area = (items[i][6] || '').trim();
+        if (area.toLowerCase() === targetArea.toLowerCase()) {
+          checkIdStr(items[i][0] || '');
+        }
       }
+      cartItems.forEach(item => {
+        const area = (item.area || '').trim();
+        if (area.toLowerCase() === targetArea.toLowerCase()) {
+          checkIdStr(item.id || '');
+        }
+      });
     }
-    return prefix ? `${prefix}-${max + 1}` : `ID-${items.length}`;
+
+    if (!prefix) {
+      for (let i = 1; i < items.length; i++) {
+        checkIdStr(items[i][0] || '');
+      }
+      cartItems.forEach(item => checkIdStr(item.id || ''));
+    }
+    
+    return prefix ? `${prefix}-${max + 1}` : `ID-${items.length + cartItems.length}`;
   };
 
   const handleStartAdd = () => {
@@ -200,7 +205,7 @@ const ProductManager = () => {
       const newCartItem = { ...addForm };
       setSrCart([...srCart, newCartItem]);
       toast.success("Agregado al carrito de Pedido Especial.");
-      setAddForm({ id: getNextId(activeTab, addForm.area), prov: addForm.prov, idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: addForm.area, orderQty: '1' });
+      setAddForm({ id: getNextId(activeTab, addForm.area, [...srCart, newCartItem]), prov: addForm.prov, idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: addForm.area, orderQty: '1' });
       return;
     }
 
