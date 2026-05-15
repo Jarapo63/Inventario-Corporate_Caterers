@@ -335,6 +335,7 @@ const ProductManager = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {groupedByArea[areaName].map(({row, originalIdx, isInactive}) => {
                         const isEditing = editingIdx === originalIdx;
+                        const isInserting = insertingIdx === originalIdx;
 
                         if (isEditing) {
                           return (
