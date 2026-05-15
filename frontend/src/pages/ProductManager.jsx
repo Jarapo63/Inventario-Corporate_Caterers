@@ -23,6 +23,7 @@ const ProductManager = () => {
 
   // Estado para un nuevo ítem
   const [isAdding, setIsAdding] = useState(false);
+  const [srCart, setSrCart] = useState([]);
   const [addForm, setAddForm] = useState({ 
     id: '', prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '', orderQty: '1' 
   });
@@ -192,10 +193,17 @@ const ProductManager = () => {
   };
 
   const handleAddNew = async () => {
-    if (activeTab === 'Special Request' && (!addForm.orderQty || parseFloat(addForm.orderQty) <= 0)) {
-      return toast.error("La cantidad a pedir debe ser mayor a 0.");
+    if (activeTab === 'Special Request') {
+      if (!addForm.orderQty || parseFloat(addForm.orderQty) <= 0) {
+        return toast.error("La cantidad a pedir debe ser mayor a 0.");
+      }
+      const newCartItem = { ...addForm };
+      setSrCart([...srCart, newCartItem]);
+      toast.success("Agregado al carrito de Pedido Especial.");
+      setAddForm({ id: getNextId(activeTab, addForm.area), prov: addForm.prov, idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: addForm.area, orderQty: '1' });
+      return;
     }
-    
+
     setIsSaving(true);
     const newRow = new Array(11).fill("");
     newRow[0] = addForm.id;
@@ -211,30 +219,57 @@ const ProductManager = () => {
 
     try {
       await addProduct(activeTab, newRow);
-      
-      if (activeTab === 'Special Request') {
-        const inventoryData = [{
-          idProducto: addForm.id,
-          nombreProducto: addForm.name,
-          area: addForm.area || 'Special',
-          proveedor: addForm.prov,
-          idProv: addForm.idProv,
-          precioUnitario: parseFloat(addForm.price) || 0,
-          orden: parseFloat(addForm.orderQty),
-          requerimiento: parseFloat(addForm.orderQty),
-          cantidadDentro: newRow[4],
-          stockFisico: 0
-        }];
-        
-        await submitInventory(inventoryData, 'SPECIAL_REQUEST', null);
-        toast.success("Pedido Especial (SR) generado con éxito.");
-      }
-      
       await loadCatalog();
       setIsAdding(false);
       setAddForm({ id: '', prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '', orderQty: '1' });
     } catch (err) {
       toast.error(`Error: ${err.message}`);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSubmitCart = async () => {
+    if (srCart.length === 0) return;
+    setIsSaving(true);
+    try {
+      const inventoryData = [];
+      for (const item of srCart) {
+        const newRow = new Array(11).fill("");
+        newRow[0] = item.id;
+        newRow[1] = item.prov;
+        newRow[2] = item.name;
+        newRow[3] = item.uom;
+        newRow[4] = item.qtyInside !== '' ? parseFloat(String(item.qtyInside).replace(/,/g, '')) : 1;
+        newRow[5] = item.idProv;
+        newRow[6] = item.area;
+        newRow[7] = 0; // SR siempre tiene Min Stock 0
+        newRow[8] = item.price;
+        newRow[10] = 'Activo';
+        
+        await addProduct('Special Request', newRow);
+        
+        inventoryData.push({
+          idProducto: item.id,
+          nombreProducto: item.name,
+          area: item.area || 'Special',
+          proveedor: item.prov,
+          idProv: item.idProv,
+          precioUnitario: parseFloat(item.price) || 0,
+          orden: parseFloat(item.orderQty),
+          requerimiento: parseFloat(item.orderQty),
+          cantidadDentro: newRow[4],
+          stockFisico: 0
+        });
+      }
+      
+      await submitInventory(inventoryData, 'SPECIAL_REQUEST', null);
+      toast.success("Pedido Especial (SR) generado con éxito.");
+      setSrCart([]);
+      setIsAdding(false);
+      await loadCatalog();
+    } catch (err) {
+      toast.error(`Error procesando carrito: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -261,7 +296,7 @@ const ProductManager = () => {
         {Object.keys(catalog).map(tab => (
           <button 
             key={tab}
-            onClick={() => { setActiveTab(tab); setEditingIdx(null); setInsertingIdx(null); setIsAdding(false); }}
+            onClick={() => { setActiveTab(tab); setEditingIdx(null); setInsertingIdx(null); setIsAdding(false); setSrCart([]); }}
             style={{ 
               padding: '0.5rem 1rem', borderRadius: '20px', border: '1px solid var(--primary)', 
               background: activeTab === tab ? 'var(--primary)' : 'transparent',
@@ -280,13 +315,13 @@ const ProductManager = () => {
             className="btn-primary" 
             style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
           >
-            <PlusCircle size={20} /> Crear Pedido Especial (SR)
+            <PlusCircle size={20} /> Iniciar Pedido Especial (SR)
           </button>
         )}
 
         {isAdding && (
           <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--accent)' }}>
-            <h3 style={{ marginTop: 0 }}>{activeTab === 'Special Request' ? 'Nuevo Pedido Especial (SR)' : `Nuevo Producto en ${activeTab}`}</h3>
+            <h3 style={{ marginTop: 0 }}>{activeTab === 'Special Request' ? 'Carrito: Pedido Especial (SR)' : `Nuevo Producto en ${activeTab}`}</h3>
             
             <datalist id="providers-list">
               {activeProviders.map(p => <option key={p} value={p} />)}
@@ -306,16 +341,34 @@ const ProductManager = () => {
               <div style={{ gridColumn: '1 / -1' }}><label>Nombre Completo</label><input className="input-field" value={addForm.name} onChange={e => setAddForm({...addForm, name: e.target.value})} /></div>
               <div><label>U. Medida</label><input className="input-field" value={addForm.uom} onChange={e => setAddForm({...addForm, uom: e.target.value})} /></div>
               <div><label>Cant. Dentro</label><input className="input-field" type="text" inputMode="numeric" value={addForm.qtyInside} onChange={e => setAddForm({...addForm, qtyInside: e.target.value})} placeholder="Ej. 100,000" /></div>
-              <div><label>Min Stock</label><input className="input-field" type="number" step="0.01" value={addForm.minStock} onChange={e => setAddForm({...addForm, minStock: e.target.value})} /></div>
+              {activeTab !== 'Special Request' && (
+                <div><label>Min Stock</label><input className="input-field" type="number" step="0.01" value={addForm.minStock} onChange={e => setAddForm({...addForm, minStock: e.target.value})} /></div>
+              )}
               <div><label>Precio Unit.</label><input className="input-field" type="number" step="0.01" value={addForm.price} onChange={e => setAddForm({...addForm, price: e.target.value})} /></div>
               {activeTab === 'Special Request' && (
                 <div><label>Cant. a Pedir</label><input className="input-field" type="number" min="1" value={addForm.orderQty} onChange={e => setAddForm({...addForm, orderQty: e.target.value})} style={{ borderColor: 'var(--accent)' }} /></div>
               )}
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button className="btn-primary" style={{ background: 'var(--accent)' }} onClick={handleAddNew} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Crear'}</button>
+              <button className="btn-primary" style={{ background: 'var(--accent)' }} onClick={handleAddNew} disabled={isSaving}>{isSaving ? 'Guardando...' : activeTab === 'Special Request' ? 'Agregar a Pedido' : 'Crear'}</button>
               <button className="btn-primary" style={{ background: 'transparent', border: '1px solid var(--text-muted)' }} onClick={() => setIsAdding(false)}>Cancelar</button>
             </div>
+
+            {activeTab === 'Special Request' && srCart.length > 0 && (
+              <div style={{ marginTop: '2rem', padding: '1.5rem', border: '1px solid var(--primary)', borderRadius: '8px', background: 'rgba(0,0,0,0.2)' }}>
+                <h4 style={{ marginTop: 0, color: 'var(--primary)', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '0.5rem' }}>Ítems en este Pedido Especial ({srCart.length})</h4>
+                <ul style={{ paddingLeft: '1.5rem', marginBottom: '1.5rem' }}>
+                  {srCart.map((item, i) => (
+                    <li key={i} style={{ marginBottom: '0.5rem' }}>
+                      <strong>{item.orderQty}x</strong> {item.name} <span style={{ color: 'var(--text-muted)' }}>({item.prov}) - ${item.price} c/u</span>
+                    </li>
+                  ))}
+                </ul>
+                <button className="btn-primary" onClick={handleSubmitCart} disabled={isSaving} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: '#fbbf24', color: 'black', fontWeight: 'bold' }}>
+                  <Check size={20} /> {isSaving ? 'Generando Pedido...' : 'Cerrar y Enviar Pedido Completo'}
+                </button>
+              </div>
+            )}
           </div>
         )}
 

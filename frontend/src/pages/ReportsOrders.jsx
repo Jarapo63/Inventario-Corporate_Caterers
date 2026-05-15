@@ -182,6 +182,12 @@ const ReportsOrders = () => {
                onClick={() => { setFilterType('Ext'); setFilterOrderId('ALL'); }}>
               Pedidos Extraordinarios
             </button>
+            <button 
+               className={filterType === 'SR' ? 'btn-primary' : 'btn-secondary'} 
+               style={{ width: 'auto', padding: '0.5rem 1.5rem', background: filterType === 'SR' ? 'var(--accent)' : 'var(--bg-dark)', color: filterType === 'SR' ? '#000' : 'white' }} 
+               onClick={() => { setFilterType('SR'); setFilterOrderId('ALL'); }}>
+              Pedidos Especiales (SR)
+            </button>
           </div>
 
           <div style={{ display: 'flex', gap: '1rem', marginLeft: 'auto', flexWrap: 'wrap' }}>

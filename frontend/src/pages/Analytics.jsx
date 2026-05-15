@@ -43,8 +43,9 @@ const Analytics = () => {
         Object.entries(catData).forEach(([sheetName, sheetItems]) => {
            sheetItems.slice(1).forEach(row => {
                if (row[0]) {
-                 pMap[row[0]] = parseFloat(String(row[8] || '').replace(/[^\d.-]/g, '')) || 0;
-                 aMap[row[0]] = { catalog: sheetName, physArea: (row[6] || 'Sin Área').trim() };
+                 const idStr = String(row[0]).trim();
+                 pMap[idStr] = parseFloat(String(row[8] || '').replace(/[^\d.-]/g, '')) || 0;
+                 aMap[idStr] = { catalog: sheetName, physArea: (row[6] || 'Sin Área').trim() };
                }
            });
         });
@@ -150,23 +151,24 @@ const Analytics = () => {
        }
     }
     const val = parseFloat(String(m['Valor del Inventario'] || '0').replace(/[^\d.-]/g, '')) || 0;
-    latestProductValues[m.ID_Producto] = val;
+    const prodId = String(m.ID_Producto || '').trim();
+    latestProductValues[prodId] = { val, fallbackArea: m['Área'] || m.Area || 'Sin Área' };
   });
 
   const valorizacion = {};
   let totalValGlobal = 0;
 
-  Object.entries(latestProductValues).forEach(([prodId, val]) => {
-     if (val === 0) return;
-     const info = areaMap[prodId] || { catalog: 'Desconocido', physArea: 'Desconocido' };
+  Object.entries(latestProductValues).forEach(([prodId, data]) => {
+     if (data.val === 0) return;
+     const info = areaMap[prodId] || { catalog: 'Históricos / Otros', physArea: data.fallbackArea };
      if (!valorizacion[info.catalog]) valorizacion[info.catalog] = { total: 0, areas: {} };
      
-     valorizacion[info.catalog].total += val;
+     valorizacion[info.catalog].total += data.val;
      if (!valorizacion[info.catalog].areas[info.physArea]) {
        valorizacion[info.catalog].areas[info.physArea] = 0;
      }
-     valorizacion[info.catalog].areas[info.physArea] += val;
-     totalValGlobal += val;
+     valorizacion[info.catalog].areas[info.physArea] += data.val;
+     totalValGlobal += data.val;
   });
 
   return (
