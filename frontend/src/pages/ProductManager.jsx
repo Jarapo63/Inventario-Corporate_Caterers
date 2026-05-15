@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Edit2, Check, X, PlusCircle, Loader2, RefreshCw, ArrowDownToLine } from 'lucide-react';
-import { fetchCatalog, updateProduct, addProduct, fetchProviders, insertProduct } from '../utils/api';
+import { fetchCatalog, updateProduct, addProduct, fetchProviders, insertProduct, submitInventory } from '../utils/api';
 import { toast } from 'react-hot-toast';
 
 const ProductManager = () => {
@@ -24,7 +24,7 @@ const ProductManager = () => {
   // Estado para un nuevo ítem
   const [isAdding, setIsAdding] = useState(false);
   const [addForm, setAddForm] = useState({ 
-    id: '', prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '' 
+    id: '', prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '', orderQty: '1' 
   });
 
   const getNextId = (tab, targetArea) => {
@@ -62,7 +62,7 @@ const ProductManager = () => {
   };
 
   const handleStartAdd = () => {
-    setAddForm({ id: getNextId(activeTab, ''), prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '' });
+    setAddForm({ id: getNextId(activeTab, ''), prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '', orderQty: '1' });
     setIsAdding(true);
   };
 
@@ -192,6 +192,10 @@ const ProductManager = () => {
   };
 
   const handleAddNew = async () => {
+    if (activeTab === 'Special Request' && (!addForm.orderQty || parseFloat(addForm.orderQty) <= 0)) {
+      return toast.error("La cantidad a pedir debe ser mayor a 0.");
+    }
+    
     setIsSaving(true);
     const newRow = new Array(11).fill("");
     newRow[0] = addForm.id;
@@ -207,11 +211,30 @@ const ProductManager = () => {
 
     try {
       await addProduct(activeTab, newRow);
+      
+      if (activeTab === 'Special Request') {
+        const inventoryData = [{
+          idProducto: addForm.id,
+          nombreProducto: addForm.name,
+          area: addForm.area || 'Special',
+          proveedor: addForm.prov,
+          idProv: addForm.idProv,
+          precioUnitario: parseFloat(addForm.price) || 0,
+          orden: parseFloat(addForm.orderQty),
+          requerimiento: parseFloat(addForm.orderQty),
+          cantidadDentro: newRow[4],
+          stockFisico: 0
+        }];
+        
+        await submitInventory(inventoryData, 'SPECIAL_REQUEST', null);
+        toast.success("Pedido Especial (SR) generado con éxito.");
+      }
+      
       await loadCatalog();
       setIsAdding(false);
-      setAddForm({ id: '', prov: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '' });
+      setAddForm({ id: '', prov: '', idProv: '', name: '', uom: '', minStock: '', price: '', qtyInside: '1', area: '', orderQty: '1' });
     } catch (err) {
-      toast.error(`Error creando producto: ${err.message}`);
+      toast.error(`Error: ${err.message}`);
     } finally {
       setIsSaving(false);
     }
@@ -251,19 +274,19 @@ const ProductManager = () => {
       </div>
 
       <main style={{ flex: 1, padding: '1rem', overflowY: 'auto' }}>
-        {!isAdding && (
+        {!isAdding && activeTab === 'Special Request' && (
           <button 
             onClick={handleStartAdd}
             className="btn-primary" 
-            style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}
+            style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem', background: 'var(--accent)' }}
           >
-            <PlusCircle size={20} /> Agregar Ítem a {activeTab}
+            <PlusCircle size={20} /> Crear Pedido Especial (SR)
           </button>
         )}
 
         {isAdding && (
           <div className="glass-panel" style={{ padding: '1.5rem', marginBottom: '2rem', border: '1px solid var(--accent)' }}>
-            <h3 style={{ marginTop: 0 }}>Nuevo Producto en {activeTab}</h3>
+            <h3 style={{ marginTop: 0 }}>{activeTab === 'Special Request' ? 'Nuevo Pedido Especial (SR)' : `Nuevo Producto en ${activeTab}`}</h3>
             
             <datalist id="providers-list">
               {activeProviders.map(p => <option key={p} value={p} />)}
@@ -285,6 +308,9 @@ const ProductManager = () => {
               <div><label>Cant. Dentro</label><input className="input-field" type="text" inputMode="numeric" value={addForm.qtyInside} onChange={e => setAddForm({...addForm, qtyInside: e.target.value})} placeholder="Ej. 100,000" /></div>
               <div><label>Min Stock</label><input className="input-field" type="number" step="0.01" value={addForm.minStock} onChange={e => setAddForm({...addForm, minStock: e.target.value})} /></div>
               <div><label>Precio Unit.</label><input className="input-field" type="number" step="0.01" value={addForm.price} onChange={e => setAddForm({...addForm, price: e.target.value})} /></div>
+              {activeTab === 'Special Request' && (
+                <div><label>Cant. a Pedir</label><input className="input-field" type="number" min="1" value={addForm.orderQty} onChange={e => setAddForm({...addForm, orderQty: e.target.value})} style={{ borderColor: 'var(--accent)' }} /></div>
+              )}
             </div>
             <div style={{ display: 'flex', gap: '1rem' }}>
               <button className="btn-primary" style={{ background: 'var(--accent)' }} onClick={handleAddNew} disabled={isSaving}>{isSaving ? 'Guardando...' : 'Crear'}</button>
@@ -411,12 +437,16 @@ const ProductManager = () => {
                               </span>
                             </div>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <button onClick={() => handleInsertClick(originalIdx, row, true)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: 'var(--danger)', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Reemplazar (Inactivar este e insertar nuevo)">
-                                <RefreshCw size={18} />
-                              </button>
-                              <button onClick={() => handleInsertClick(originalIdx, row, false)} style={{ background: 'rgba(56, 189, 248, 0.1)', border: 'none', color: 'var(--primary)', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Insertar nuevo producto debajo">
-                                <ArrowDownToLine size={18} />
-                              </button>
+                              {activeTab !== 'Special Request' && (
+                                <>
+                                  <button onClick={() => handleInsertClick(originalIdx, row, true)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: 'none', color: 'var(--danger)', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Reemplazar (Inactivar este e insertar nuevo)">
+                                    <RefreshCw size={18} />
+                                  </button>
+                                  <button onClick={() => handleInsertClick(originalIdx, row, false)} style={{ background: 'rgba(56, 189, 248, 0.1)', border: 'none', color: 'var(--primary)', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Insertar nuevo producto debajo">
+                                    <ArrowDownToLine size={18} />
+                                  </button>
+                                </>
+                              )}
                               <button onClick={() => handleEditClick(originalIdx, row)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: 'white', padding: '0.5rem', borderRadius: '50%', cursor: 'pointer' }} title="Editar este producto">
                                 <Edit2 size={18} />
                               </button>

@@ -1,6 +1,6 @@
 const { sheets, SHEET_ID } = require('../db');
 
-const CATALOG_TABS = ['Drivers List', 'Kitchen List', 'Holiday'];
+const CATALOG_TABS = ['Drivers List', 'Kitchen List', 'Holiday', 'Special Request'];
 
 const getCatalog = async (req, res) => {
   try {
@@ -39,7 +39,7 @@ const submitInventory = async (req, res) => {
     const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
     const yyyy = dateObj.getFullYear();
     const dateStr = `${dd}${mm}${yyyy}`;
-    const prefix = type === 'EXTRAORDINARIO' ? 'Ext' : 'Sem';
+    const prefix = type === 'EXTRAORDINARIO' ? 'Ext' : type === 'SPECIAL_REQUEST' ? 'SR' : 'Sem';
 
     const sheetMeta = await sheets.spreadsheets.get({ spreadsheetId: SHEET_ID });
     const hasOrders = sheetMeta.data.sheets.some(s => s.properties.title === 'ORDENES_COMPRA_HISTORICO');
@@ -88,7 +88,7 @@ const submitInventory = async (req, res) => {
         finalOrderId, // A: ID_Pedido
         timestamp,    // B: Fecha
         username,     // C: Usuario
-        type === 'EXTRAORDINARIO' ? 'EXTRAORDINARIA' : 'CICLO JUEVES', // D: Tipo
+        type === 'EXTRAORDINARIO' ? 'EXTRAORDINARIA' : type === 'SPECIAL_REQUEST' ? 'SPECIAL REQUEST' : 'CICLO JUEVES', // D: Tipo
         item.idProducto, // E
         item.nombreProducto, // F
         item.area, // G
